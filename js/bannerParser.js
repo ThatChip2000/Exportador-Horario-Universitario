@@ -228,10 +228,47 @@ const BannerParser = (() => {
   }
 
   /**
+   * Deduplicate courses (by NRC or Code+Section) and meetings (same day + time)
+   */
+  function deduplicateCourses(courses) {
+    const unique = [];
+    for (const c of courses || []) {
+      const existing = unique.find(
+        (u) =>
+          (u.nrc && c.nrc && u.nrc === c.nrc) ||
+          (u.code && c.code && u.code === c.code && u.section === c.section)
+      );
+      if (!existing) {
+        const dedupMeetings = [];
+        for (const m of c.meetings || []) {
+          if (!dedupMeetings.some((em) => em.day === m.day && Math.abs(em.startMin - m.startMin) <= 2 && Math.abs(em.endMin - m.endMin) <= 2)) {
+            dedupMeetings.push({ ...m });
+          }
+        }
+        unique.push({ ...c, meetings: dedupMeetings, tbaMeetings: [...(c.tbaMeetings || [])] });
+      } else {
+        if (isCodeLikeTitle(existing.title, existing.code) && !isCodeLikeTitle(c.title, c.code)) {
+          existing.title = c.title;
+        }
+        if (!existing.nrc && c.nrc) existing.nrc = c.nrc;
+        if (!existing.instructor && c.instructor) existing.instructor = c.instructor;
+        for (const m of c.meetings || []) {
+          const dup = existing.meetings.find(
+            (em) => em.day === m.day && Math.abs(em.startMin - m.startMin) <= 2 && Math.abs(em.endMin - m.endMin) <= 2
+          );
+          if (!dup) existing.meetings.push({ ...m });
+        }
+      }
+    }
+    return unique;
+  }
+
+  /**
    * Assign deterministic colors to courses
    */
   function finalizeSchedule(courses, term = "") {
-    courses.forEach((course, idx) => {
+    const deduped = deduplicateCourses(courses);
+    deduped.forEach((course, idx) => {
       if (!course.color) {
         course.color = PALETTE[idx % PALETTE.length];
       }
@@ -242,7 +279,7 @@ const BannerParser = (() => {
 
     return {
       term: cleanText(term),
-      courses,
+      courses: deduped,
       importedAt: new Date().toISOString()
     };
   }
@@ -792,6 +829,7 @@ const BannerParser = (() => {
       }
       course.tbaMeetings = remainingTba;
     }
+    schedule.courses = deduplicateCourses(schedule.courses);
     return schedule;
   }
 
