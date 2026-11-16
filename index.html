@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horario Visual — Banner Santo Tomás</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="topbar-left">
+      <div class="logo">
+        <span class="logo-icon">📅</span>
+        <div>
+          <h1>Horario Visual</h1>
+          <p class="subtitle">Ellucian Banner · Horario de Detalle</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="btn-open-import" class="btn btn-primary">
+        <span>📥</span> Importar de Banner
+      </button>
+      <button id="btn-load-demo" class="btn btn-secondary" title="Cargar un horario de prueba">
+        <span>✨</span> Cargar Ejemplo
+      </button>
+      <div class="divider-v"></div>
+      <button id="btn-export-png" class="btn btn-secondary" title="Descargar imagen PNG">
+        <span>🖼️</span> PNG
+      </button>
+      <button id="btn-export-pdf" class="btn btn-secondary" title="Imprimir o guardar como PDF">
+        <span>📄</span> PDF
+      </button>
+      <button id="btn-open-ics" class="btn btn-secondary" title="Exportar a Google Calendar / Outlook / Apple Calendar">
+        <span>📆</span> .ics
+      </button>
+      <div class="divider-v"></div>
+      <button id="btn-toggle-theme" class="btn btn-icon" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+        🌙
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Controls / Toolbar -->
+    <section class="toolbar no-print" id="schedule-toolbar" hidden>
+      <div class="toolbar-group">
+        <label class="toggle-switch">
+          <input type="checkbox" id="chk-merge-blocks" checked />
+          <span class="slider"></span>
+          <span class="toggle-label">Unir bloques consecutivos</span>
+        </label>
+
+        <label class="toggle-switch">
+          <input type="checkbox" id="chk-show-saturday" />
+          <span class="slider"></span>
+          <span class="toggle-label">Mostrar Sábado</span>
+        </label>
+
+        <label class="toggle-switch">
+          <input type="checkbox" id="chk-highlight-now" checked />
+          <span class="slider"></span>
+          <span class="toggle-label">Marcar hora actual</span>
+        </label>
+      </div>
+
+      <div class="toolbar-group">
+        <span id="term-badge" class="badge" hidden></span>
+        <span id="stats-badge" class="badge badge-muted">0 ramos</span>
+        <button id="btn-clear-schedule" class="btn btn-danger-ghost btn-sm">🗑️ Limpiar</button>
+      </div>
+    </section>
+
+    <!-- Empty State -->
+    <section id="empty-state" class="empty-state no-print">
+      <div class="empty-card">
+        <div class="empty-icon">🎓</div>
+        <h2>Convierte tu Horario de Banner en un Calendario Visual</h2>
+        <p>
+          Sin contraseñas ni servidores externos. Todo se procesa 100% en tu navegador a partir de
+          <strong>Horario de Detalle de Alumno</strong> (<code>P_CrseSchdDetl</code>).
+        </p>
+        <div class="empty-actions">
+          <button id="btn-empty-import" class="btn btn-primary btn-lg">
+            📥 Importar mi Horario
+          </button>
+          <button id="btn-empty-demo" class="btn btn-secondary btn-lg">
+            ✨ Probar con Datos de Ejemplo
+          </button>
+        </div>
+        <div class="feature-pills">
+          <span>📄 Subir .html (Ctrl+S)</span>
+          <span>📋 Pegar texto (Ctrl+A / Ctrl+C)</span>
+          <span>🔖 Bookmarklet 1-clic</span>
+          <span>🖼️ Exportar PNG / PDF / .ics</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Schedule Layout -->
+    <section id="schedule-workspace" class="workspace" hidden>
+      <!-- Print Header -->
+      <div class="print-only print-header">
+        <h2 id="print-title">Horario Semanal</h2>
+        <p id="print-subtitle"></p>
+      </div>
+
+      <div class="schedule-wrapper">
+        <div id="schedule-grid" class="schedule-grid">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- Course List / Color Customizer -->
+      <aside class="courses-sidebar no-print">
+        <div class="sidebar-header">
+          <h3>Ramos del Semestre</h3>
+          <small>Haz clic en el color para personalizar</small>
+        </div>
+        <div id="courses-list" class="courses-list">
+          <!-- Rendered dynamically -->
+        </div>
+        <div id="tba-section" class="tba-section" hidden>
+          <h4>Sin horario fijo (TBA / Asincrónico)</h4>
+          <div id="tba-list"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Import Modal -->
+  <div id="modal-import" class="modal-backdrop no-print" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Importar desde Ellucian Banner</h2>
+        <button class="btn-close" data-close-modal="modal-import" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="tab-html">📄 Subir HTML</button>
+        <button class="tab" data-tab="tab-text">📋 Pegar Texto</button>
+        <button class="tab" data-tab="tab-bookmarklet">🔖 Bookmarklet</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tab 1: Upload HTML -->
+        <div id="tab-html" class="tab-panel active">
+          <ol class="steps">
+            <li>Ingresa al portal de alumnos y abre <strong>Horario de Detalle de Alumno</strong> o <strong>Semana de un Vistazo</strong>.</li>
+            <li>Presiona <kbd>Ctrl</kbd> + <kbd>S</kbd> y guarda la página como <strong>"Página web, solo HTML"</strong> (<code>.html</code>).</li>
+            <li>Arrastra o selecciona <strong>uno o varios archivos <code>.html</code> a la vez</strong> (se combinan automáticamente por NRC):</li>
+          </ol>
+
+          <div id="drop-zone" class="drop-zone">
+            <input type="file" id="file-input" accept=".html,.htm" multiple hidden />
+            <div class="drop-zone-content">
+              <span class="drop-icon">📂</span>
+              <p><strong>Haz clic para elegir</strong> o arrastra tus archivos <code>.html</code> aquí</p>
+              <small>Puedes subir "Semana de un Vistazo" + todos tus "Horario de Detalle" juntos</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Paste Text -->
+        <div id="tab-text" class="tab-panel">
+          <ol class="steps">
+            <li>En <strong>Horario de Detalle de Alumno</strong>, presiona <kbd>Ctrl</kbd> + <kbd>A</kbd> y luego <kbd>Ctrl</kbd> + <kbd>C</kbd>.</li>
+            <li>Pega todo el texto en el cuadro de abajo y presiona <strong>Procesar</strong>:</li>
+          </ol>
+
+          <textarea
+            id="paste-textarea"
+            class="paste-area"
+            rows="8"
+            placeholder="Pega aquí el contenido copiado de Banner (Ctrl + V)..."
+          ></textarea>
+          <div class="modal-footer-inline">
+            <button id="btn-parse-text" class="btn btn-primary">⚡ Procesar Texto</button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Bookmarklet -->
+        <div id="tab-bookmarklet" class="tab-panel">
+          <p class="info-text">
+            Un <strong>Bookmarklet</strong> es un marcador inteligente. Arrástralo a tu barra de favoritos: cuando estés viendo tu <em>Horario de Detalle</em> en Banner, haz clic en él y abrirá esta app con tu horario cargado al instante.
+          </p>
+          <div class="bookmarklet-box">
+            <a id="bookmarklet-link" href="#" class="bookmarklet-pill" title="Arrástrame a tu barra de favoritos">
+              📅 Abrir en Horario Visual
+            </a>
+            <small>⬅️ Arrastra este botón a tu barra de marcadores (Ctrl+Shift+B para mostrarla)</small>
+          </div>
+          <div class="bookmarklet-code-wrap">
+            <label for="bookmarklet-code">O copia el código manualmente como URL de un nuevo marcador:</label>
+            <div class="copy-row">
+              <input type="text" id="bookmarklet-code" readonly />
+              <button id="btn-copy-bookmarklet" class="btn btn-secondary btn-sm">📋 Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="import-feedback" class="feedback" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Detail Modal -->
+  <div id="modal-course" class="modal-backdrop no-print" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="detail-title">Detalle del Ramo</h2>
+        <button class="btn-close" data-close-modal="modal-course" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body" id="detail-body">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ICS Export Modal -->
+  <div id="modal-ics" class="modal-backdrop no-print" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Exportar a Calendario (.ics)</h2>
+        <button class="btn-close" data-close-modal="modal-ics" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="info-text">
+          Genera un archivo <code>.ics</code> compatible con <strong>Google Calendar</strong>, <strong>Outlook</strong> y <strong>Apple Calendar</strong> con todas tus clases recurrentes del semestre.
+        </p>
+        <div class="form-grid">
+          <label>
+            <span>Inicio del semestre</span>
+            <input type="date" id="ics-start-date" />
+          </label>
+          <label>
+            <span>Término del semestre</span>
+            <input type="date" id="ics-end-date" />
+          </label>
+        </div>
+        <p class="hint-text">
+          Si Banner incluía las fechas de cada ramo, se usarán automáticamente si dejas esto por defecto, o puedes ajustarlas aquí.
+        </p>
+        <div class="modal-footer-inline">
+          <button id="btn-download-ics" class="btn btn-primary">⬇️ Descargar Horario.ics</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/demoData.js"></script>
+  <script src="js/bannerParser.js"></script>
+  <script src="js/icsExporter.js"></script>
+  <script src="js/pngExporter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
