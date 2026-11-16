@@ -661,8 +661,8 @@ const BannerParser = (() => {
    * on the current origin (fixing Santo Tomás's selferviceprd link typo) using the active session.
    */
   function buildBookmarklet(targetUrl) {
-    const cleanUrl = targetUrl.split("#")[0];
-    const script = `(async function(){var links=[...new Set([...document.querySelectorAll('a[href*="P_CrseSchdDetl"]')].map(function(a){var u=new URL(a.href,location.href);return location.origin+u.pathname+u.search;}))];var h='';if(links.length){try{var pages=await Promise.all(links.map(function(u){return fetch(u,{credentials:'include'}).then(function(r){return r.text();});}));pages.forEach(function(txt){var d=new DOMParser().parseFromString(txt,'text/html');d.querySelectorAll('table.datadisplaytable').forEach(function(t){var c=t.cloneNode(true);c.querySelectorAll('img,a').forEach(function(x){x.remove();});h+=c.outerHTML.replace(/\\s+(style|class|summary|scope|colspan|align|valign|width|border|cellspacing|cellpadding)="[^"]*"/gi,'');});});}catch(e){}}if(!h){var t=document.querySelectorAll('table.datadisplaytable');if(!t.length){alert('Abre "Semana de un Vistazo" o "Horario de Detalle de Alumno" en Banner.');return;}t.forEach(function(e){h+=e.outerHTML;});}var p=btoa(unescape(encodeURIComponent(h)));window.open(${JSON.stringify(cleanUrl)}+'#html='+p,'_blank');})();`;
+    const cleanUrl = targetUrl.split("#")[0].split("?")[0];
+    const script = `(async function(){var links=[...new Set([...document.querySelectorAll('a[href*="P_CrseSchdDetl"]')].map(function(a){var u=new URL(a.href,location.href);return location.origin+u.pathname+u.search;}))];var h='';if(links.length){try{var pages=await Promise.all(links.map(function(u){return fetch(u,{credentials:'include'}).then(function(r){return r.text();});}));pages.forEach(function(txt){var d=new DOMParser().parseFromString(txt,'text/html');d.querySelectorAll('table.datadisplaytable').forEach(function(t){var c=t.cloneNode(true);c.querySelectorAll('img,a').forEach(function(x){x.remove();});h+=c.outerHTML.replace(/\\s+(style|class|summary|scope|colspan|align|valign|width|border|cellspacing|cellpadding)="[^"]*"/gi,'');});});}catch(e){}}if(!h){var t=document.querySelectorAll('table.datadisplaytable');if(!t.length){alert('Abre "Semana de un Vistazo" o "Horario de Detalle de Alumno" en Banner.');return;}t.forEach(function(e){h+=e.outerHTML;});}var p=btoa(unescape(encodeURIComponent(h)));window.open(${JSON.stringify(cleanUrl)}+'?t='+Date.now()+'#html='+p,'_blank');})();`;
     return "javascript:" + script;
   }
 
@@ -674,12 +674,12 @@ const BannerParser = (() => {
     if (hash.startsWith("#html=")) {
       const b64 = hash.slice(6);
       const html = decodeURIComponent(escape(atob(b64)));
-      history.replaceState(null, "", window.location.pathname + window.location.search);
+      history.replaceState(null, "", window.location.pathname);
       return parseHTML(html);
     }
     if (hash.startsWith("#data=")) {
       const jsonStr = decodeURIComponent(escape(atob(hash.slice(6))));
-      history.replaceState(null, "", window.location.pathname + window.location.search);
+      history.replaceState(null, "", window.location.pathname);
       return JSON.parse(jsonStr);
     }
     return null;
