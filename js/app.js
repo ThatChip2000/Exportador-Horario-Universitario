@@ -656,6 +656,18 @@
       window.print();
     });
 
+    // Export Excel (.xlsx)
+    document.getElementById("btn-export-excel").addEventListener("click", () => {
+      if (!state.schedule) return;
+      const blocks = getProcessedBlocks();
+      const showSaturday = Boolean(state.prefs.showSaturday);
+      const visibleBlocks = getVisibleUniversityBlocks(blocks, showSaturday);
+      ExcelExporter.exportExcel(state.schedule, blocks, {
+        showSaturday,
+        visibleBlocks
+      });
+    });
+
     // Export ICS Modal
     document.getElementById("btn-open-ics").addEventListener("click", () => {
       if (!state.schedule) return;

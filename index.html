@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Horario Visual — Banner Santo Tomás</title>
-  <link rel="stylesheet" href="css/styles.css?v=20261116c" />
+  <link rel="stylesheet" href="css/styles.css?v=20261116d" />
 </head>
 <body>
   <header class="topbar no-print">
@@ -31,6 +31,9 @@
       </button>
       <button id="btn-export-pdf" class="btn btn-secondary" title="Imprimir o guardar como PDF">
         <span>📄</span> PDF
+      </button>
+      <button id="btn-export-excel" class="btn btn-secondary" title="Descargar archivo Excel (.xlsx)">
+        <span>📊</span> Excel
       </button>
       <button id="btn-open-ics" class="btn btn-secondary" title="Exportar a Google Calendar / Outlook / Apple Calendar">
         <span>📆</span> .ics
@@ -138,52 +141,23 @@
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="tab-html">📄 Subir HTML</button>
-        <button class="tab" data-tab="tab-text">📋 Pegar Texto</button>
-        <button class="tab" data-tab="tab-bookmarklet">🔖 Bookmarklet</button>
+        <button class="tab active" data-tab="tab-bookmarklet">
+          <span>🔖 Bookmarklet</span>
+          <span class="tab-badge">Recomendado</span>
+        </button>
+        <button class="tab" data-tab="tab-html">
+          <span>📄 Subir HTML</span>
+        </button>
+        <button class="tab" data-tab="tab-text">
+          <span>📋 Pegar Texto</span>
+        </button>
       </div>
 
       <div class="modal-body">
-        <!-- Tab 1: Upload HTML -->
-        <div id="tab-html" class="tab-panel active">
-          <ol class="steps">
-            <li>Ingresa al portal de alumnos y abre <strong>Horario de Detalle de Alumno</strong> o <strong>Semana de un Vistazo</strong>.</li>
-            <li>Presiona <kbd>Ctrl</kbd> + <kbd>S</kbd> y guarda la página como <strong>"Página web, solo HTML"</strong> (<code>.html</code>).</li>
-            <li>Arrastra o selecciona <strong>uno o varios archivos <code>.html</code> a la vez</strong> (se combinan automáticamente por NRC):</li>
-          </ol>
-
-          <div id="drop-zone" class="drop-zone">
-            <input type="file" id="file-input" accept=".html,.htm" multiple hidden />
-            <div class="drop-zone-content">
-              <span class="drop-icon">📂</span>
-              <p><strong>Haz clic para elegir</strong> o arrastra tus archivos <code>.html</code> aquí</p>
-              <small>Puedes subir "Semana de un Vistazo" + todos tus "Horario de Detalle" juntos</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 2: Paste Text -->
-        <div id="tab-text" class="tab-panel">
-          <ol class="steps">
-            <li>En <strong>Horario de Detalle de Alumno</strong>, presiona <kbd>Ctrl</kbd> + <kbd>A</kbd> y luego <kbd>Ctrl</kbd> + <kbd>C</kbd>.</li>
-            <li>Pega todo el texto en el cuadro de abajo y presiona <strong>Procesar</strong>:</li>
-          </ol>
-
-          <textarea
-            id="paste-textarea"
-            class="paste-area"
-            rows="8"
-            placeholder="Pega aquí el contenido copiado de Banner (Ctrl + V)..."
-          ></textarea>
-          <div class="modal-footer-inline">
-            <button id="btn-parse-text" class="btn btn-primary">⚡ Procesar Texto</button>
-          </div>
-        </div>
-
-        <!-- Tab 3: Bookmarklet -->
-        <div id="tab-bookmarklet" class="tab-panel">
+        <!-- Tab 1: Bookmarklet (Default / Recommended) -->
+        <div id="tab-bookmarklet" class="tab-panel active">
           <p class="info-text">
-            Un <strong>Bookmarklet</strong> es un marcador inteligente. Arrástralo a tu barra de favoritos: cuando estés viendo tu <em>Horario de Detalle</em> en Banner, haz clic en él y abrirá esta app con tu horario cargado al instante.
+            Un <strong>Bookmarklet</strong> es un marcador inteligente. Arrástralo a tu barra de favoritos: cuando estés viendo <em>Semana de un Vistazo</em> o <em>Horario de Detalle</em> en Banner, haz clic en él y abrirá esta app con todo tu horario cargado al instante.
           </p>
           <div class="bookmarklet-box">
             <a id="bookmarklet-link" href="#" draggable="true" class="bookmarklet-pill" title="Arrástrame a tu barra de favoritos">
@@ -205,6 +179,42 @@
               </ol>
             </div>
           </details>
+        </div>
+
+        <!-- Tab 2: Upload HTML -->
+        <div id="tab-html" class="tab-panel">
+          <ol class="steps">
+            <li>Ingresa al portal de alumnos y abre <strong>Horario de Detalle de Alumno</strong> o <strong>Semana de un Vistazo</strong>.</li>
+            <li>Presiona <kbd>Ctrl</kbd> + <kbd>S</kbd> y guarda la página como <strong>"Página web, solo HTML"</strong> (<code>.html</code>).</li>
+            <li>Arrastra o selecciona <strong>uno o varios archivos <code>.html</code> a la vez</strong> (se combinan automáticamente por NRC):</li>
+          </ol>
+
+          <div id="drop-zone" class="drop-zone">
+            <input type="file" id="file-input" accept=".html,.htm" multiple hidden />
+            <div class="drop-zone-content">
+              <span class="drop-icon">📂</span>
+              <p><strong>Haz clic para elegir</strong> o arrastra tus archivos <code>.html</code> aquí</p>
+              <small>Puedes subir "Semana de un Vistazo" + todos tus "Horario de Detalle" juntos</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Paste Text -->
+        <div id="tab-text" class="tab-panel">
+          <ol class="steps">
+            <li>En <strong>Horario de Detalle de Alumno</strong>, presiona <kbd>Ctrl</kbd> + <kbd>A</kbd> y luego <kbd>Ctrl</kbd> + <kbd>C</kbd>.</li>
+            <li>Pega todo el texto en el cuadro de abajo y presiona <strong>Procesar</strong>:</li>
+          </ol>
+
+          <textarea
+            id="paste-textarea"
+            class="paste-area"
+            rows="8"
+            placeholder="Pega aquí el contenido copiado de Banner (Ctrl + V)..."
+          ></textarea>
+          <div class="modal-footer-inline">
+            <button id="btn-parse-text" class="btn btn-primary">⚡ Procesar Texto</button>
+          </div>
         </div>
 
         <div id="import-feedback" class="feedback" hidden></div>
@@ -256,10 +266,11 @@
     </div>
   </div>
 
-  <script src="js/demoData.js?v=20261116"></script>
-  <script src="js/bannerParser.js?v=20261116c"></script>
-  <script src="js/icsExporter.js?v=20261116"></script>
-  <script src="js/pngExporter.js?v=20261116"></script>
-  <script src="js/app.js?v=20261116"></script>
+  <script src="js/demoData.js?v=20261116d"></script>
+  <script src="js/bannerParser.js?v=20261116d"></script>
+  <script src="js/icsExporter.js?v=20261116d"></script>
+  <script src="js/pngExporter.js?v=20261116d"></script>
+  <script src="js/excelExporter.js?v=20261116d"></script>
+  <script src="js/app.js?v=20261116d"></script>
 </body>
 </html>
