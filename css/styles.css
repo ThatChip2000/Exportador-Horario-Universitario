@@ -808,11 +808,27 @@ code, kbd {
   cursor: grabbing;
 }
 
-.bookmarklet-code-wrap label {
-  display: block;
-  font-size: 0.82rem;
+.bookmarklet-code-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: var(--bg-card);
+}
+
+.bookmarklet-code-wrap summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: 6px;
+}
+
+.bookmarklet-manual-body {
+  margin-top: 12px;
+}
+
+.steps-compact {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
 }
 
 .copy-row {

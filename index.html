@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Horario Visual — Banner Santo Tomás</title>
-  <link rel="stylesheet" href="css/styles.css?v=20261116b" />
+  <link rel="stylesheet" href="css/styles.css?v=20261116c" />
 </head>
 <body>
   <header class="topbar no-print">
@@ -191,13 +191,20 @@
             </a>
             <small>⬅️ Arrastra este botón a tu barra de marcadores (Ctrl+Shift+B para mostrarla)</small>
           </div>
-          <div class="bookmarklet-code-wrap">
-            <label for="bookmarklet-code">O copia el código manualmente como URL de un nuevo marcador:</label>
-            <div class="copy-row">
-              <input type="text" id="bookmarklet-code" readonly />
-              <button id="btn-copy-bookmarklet" class="btn btn-secondary btn-sm">📋 Copiar</button>
+          <details class="bookmarklet-code-wrap">
+            <summary>¿No puedes arrastrarlo o estás en celular? Agrégalo en 3 pasos</summary>
+            <div class="bookmarklet-manual-body">
+              <div class="copy-row">
+                <input type="text" id="bookmarklet-code" readonly />
+                <button id="btn-copy-bookmarklet" class="btn btn-secondary btn-sm">📋 Copiar código</button>
+              </div>
+              <ol class="steps steps-compact">
+                <li>Presiona <strong>📋 Copiar código</strong> arriba.</li>
+                <li>Guarda cualquier página como favorito (<kbd>Ctrl</kbd> + <kbd>D</kbd> en PC o ⭐ en celular) y abre <strong>Editar / Más</strong>.</li>
+                <li>En el campo <strong>URL</strong> (o <em>Dirección</em>), borra lo que hay, pega el código copiado y guarda.</li>
+              </ol>
             </div>
-          </div>
+          </details>
         </div>
 
         <div id="import-feedback" class="feedback" hidden></div>
