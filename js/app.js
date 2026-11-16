@@ -437,20 +437,214 @@
     }
   }
 
+  function parseTimeInput(str) {
+    const [hh, mm] = (str || "").split(":").map(Number);
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+    return hh * 60 + mm;
+  }
+
+  function findCourseById(courseId) {
+    if (!state.schedule || !Array.isArray(state.schedule.courses)) return null;
+    return state.schedule.courses.find((c) => c.id === courseId) || null;
+  }
+
+  function deleteBlockFromSchedule(blk) {
+    const course = findCourseById(blk.courseId);
+    if (!course) return;
+    course.meetings = (course.meetings || []).filter(
+      (m) => !(m.day === blk.day && m.startMin >= blk.startMin && m.endMin <= blk.endMin)
+    );
+    if (!course.meetings.length && !(course.tbaMeetings || []).length) {
+      state.schedule.courses = state.schedule.courses.filter((c) => c.id !== course.id);
+    }
+    saveSchedule();
+    el.modalCourse.hidden = true;
+    render();
+  }
+
+  function updateBlockInSchedule(blk, updated) {
+    const course = findCourseById(blk.courseId);
+    if (!course) return;
+
+    course.title = updated.title;
+    const oldMeetings = course.meetings || [];
+    const matched = oldMeetings.filter(
+      (m) => m.day === blk.day && m.startMin >= blk.startMin && m.endMin <= blk.endMin
+    );
+    const firstMatched = matched[0] || {};
+
+    course.meetings = oldMeetings.filter(
+      (m) => !(m.day === blk.day && m.startMin >= blk.startMin && m.endMin <= blk.endMin)
+    );
+    course.meetings.push({
+      day: updated.day,
+      startMin: updated.startMin,
+      endMin: updated.endMin,
+      room: BannerParser.cleanRoom(updated.room),
+      type: updated.type || "Clase",
+      instructor: updated.instructor,
+      startDate: firstMatched.startDate || blk.startDate || null,
+      endDate: firstMatched.endDate || blk.endDate || null
+    });
+    course.meetings.sort((a, b) => a.day - b.day || a.startMin - b.startMin);
+
+    saveSchedule();
+    el.modalCourse.hidden = true;
+    render();
+  }
+
   function openCourseDetail(blk) {
-    el.detailTitle.textContent = blk.courseTitle;
-    el.detailBody.innerHTML = `
-      <div class="detail-list">
-        <div class="detail-row"><span class="detail-label">Código / Sección</span><span>${escapeHtml(blk.courseCode || "-")}${blk.courseSection ? "-" + escapeHtml(blk.courseSection) : ""}</span></div>
-        <div class="detail-row"><span class="detail-label">NRC</span><span>${escapeHtml(blk.nrc || "-")}</span></div>
-        <div class="detail-row"><span class="detail-label">Horario</span><span>${DAY_NAMES[blk.day]} · ${formatMin(blk.startMin)} - ${formatMin(blk.endMin)}</span></div>
-        <div class="detail-row"><span class="detail-label">Tipo</span><span>${escapeHtml(blk.type || "-")}</span></div>
-        <div class="detail-row"><span class="detail-label">Sala / Ubicación</span><span>${escapeHtml(BannerParser.formatRoom(blk.room, true) || "-")}</span></div>
-        <div class="detail-row"><span class="detail-label">Profesor</span><span>${escapeHtml(blk.instructor || "Por asignar")}</span></div>
-        <div class="detail-row"><span class="detail-label">Campus</span><span>${escapeHtml(blk.campus || "-")}</span></div>
-        <div class="detail-row"><span class="detail-label">Créditos</span><span>${escapeHtml(blk.credits || "-")}</span></div>
-      </div>
-    `;
+    const renderViewMode = () => {
+      el.detailTitle.textContent = blk.courseTitle;
+      el.detailBody.innerHTML = `
+        <div class="detail-list">
+          <div class="detail-row"><span class="detail-label">Código / Sección</span><span>${escapeHtml(blk.courseCode || "-")}${blk.courseSection ? "-" + escapeHtml(blk.courseSection) : ""}</span></div>
+          <div class="detail-row"><span class="detail-label">NRC</span><span>${escapeHtml(blk.nrc || "-")}</span></div>
+          <div class="detail-row"><span class="detail-label">Horario</span><span>${DAY_NAMES[blk.day]} · ${formatMin(blk.startMin)} - ${formatMin(blk.endMin)}</span></div>
+          <div class="detail-row"><span class="detail-label">Tipo</span><span>${escapeHtml(blk.type || "-")}</span></div>
+          <div class="detail-row"><span class="detail-label">Sala / Ubicación</span><span>${escapeHtml(BannerParser.formatRoom(blk.room, true) || "-")}</span></div>
+          <div class="detail-row"><span class="detail-label">Profesor</span><span>${escapeHtml(blk.instructor || "Por asignar")}</span></div>
+          <div class="detail-row"><span class="detail-label">Campus</span><span>${escapeHtml(blk.campus || "-")}</span></div>
+          <div class="detail-row"><span class="detail-label">Créditos</span><span>${escapeHtml(blk.credits || "-")}</span></div>
+        </div>
+        <div class="detail-actions">
+          <button type="button" id="btn-detail-delete" class="btn btn-danger-ghost">🗑️ Eliminar bloque</button>
+          <button type="button" id="btn-detail-edit" class="btn btn-secondary">✏️ Editar</button>
+        </div>
+        <div id="detail-delete-confirm" class="confirm-box confirm-danger" hidden>
+          <p>¿Eliminar este bloque de <strong>${DAY_NAMES[blk.day]} ${formatMin(blk.startMin)} - ${formatMin(blk.endMin)}</strong>?</p>
+          <div class="confirm-actions">
+            <button type="button" id="btn-confirm-delete-no" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="button" id="btn-confirm-delete-yes" class="btn btn-danger btn-sm">Sí, eliminar</button>
+          </div>
+        </div>
+      `;
+
+      const confirmBox = document.getElementById("detail-delete-confirm");
+      document.getElementById("btn-detail-delete").addEventListener("click", () => {
+        confirmBox.hidden = false;
+      });
+      document.getElementById("btn-confirm-delete-no").addEventListener("click", () => {
+        confirmBox.hidden = true;
+      });
+      document.getElementById("btn-confirm-delete-yes").addEventListener("click", () => {
+        deleteBlockFromSchedule(blk);
+      });
+      document.getElementById("btn-detail-edit").addEventListener("click", renderEditMode);
+    };
+
+    const renderEditMode = () => {
+      el.detailTitle.textContent = `Editar · ${blk.courseTitle}`;
+      const dayOptions = DAY_NAMES.map(
+        (name, idx) => `<option value="${idx}" ${idx === blk.day ? "selected" : ""}>${name}</option>`
+      ).join("");
+
+      el.detailBody.innerHTML = `
+        <form id="edit-block-form" class="edit-form">
+          <label>
+            <span>Nombre del ramo</span>
+            <input type="text" id="edit-title" value="${escapeHtml(blk.courseTitle)}" required />
+          </label>
+          <div class="form-grid">
+            <label>
+              <span>Día</span>
+              <select id="edit-day">${dayOptions}</select>
+            </label>
+            <label>
+              <span>Tipo</span>
+              <input type="text" id="edit-type" list="type-suggestions" value="${escapeHtml(blk.type || "Clase")}" />
+              <datalist id="type-suggestions">
+                <option value="Cátedra"></option>
+                <option value="Práctico"></option>
+                <option value="Laboratorio"></option>
+                <option value="Taller"></option>
+                <option value="Ayudantía"></option>
+              </datalist>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>
+              <span>Hora inicio</span>
+              <input type="time" id="edit-start" value="${formatMin(blk.startMin)}" required />
+            </label>
+            <label>
+              <span>Hora término</span>
+              <input type="time" id="edit-end" value="${formatMin(blk.endMin)}" required />
+            </label>
+          </div>
+          <label>
+            <span>Sala / Ubicación</span>
+            <input type="text" id="edit-room" value="${escapeHtml(blk.room || "")}" placeholder="Ej: S-11-P05-A o Sala 11 · Piso 5" />
+          </label>
+          <label>
+            <span>Profesor</span>
+            <input type="text" id="edit-instructor" value="${escapeHtml(blk.instructor || "")}" placeholder="Por asignar" />
+          </label>
+          <div id="edit-error" class="feedback error" hidden></div>
+          <div id="edit-actions" class="detail-actions">
+            <button type="button" id="btn-edit-cancel" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">💾 Guardar cambios</button>
+          </div>
+          <div id="edit-save-confirm" class="confirm-box" hidden>
+            <p>¿Confirmas guardar los cambios en esta clase?</p>
+            <div class="confirm-actions">
+              <button type="button" id="btn-confirm-save-no" class="btn btn-secondary btn-sm">Volver</button>
+              <button type="button" id="btn-confirm-save-yes" class="btn btn-primary btn-sm">Sí, guardar</button>
+            </div>
+          </div>
+        </form>
+      `;
+
+      const form = document.getElementById("edit-block-form");
+      const errBox = document.getElementById("edit-error");
+      const saveConfirm = document.getElementById("edit-save-confirm");
+      const editActions = document.getElementById("edit-actions");
+      let pendingUpdate = null;
+
+      document.getElementById("btn-edit-cancel").addEventListener("click", renderViewMode);
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        errBox.hidden = true;
+
+        const title = document.getElementById("edit-title").value.trim();
+        const day = parseInt(document.getElementById("edit-day").value, 10);
+        const startMin = parseTimeInput(document.getElementById("edit-start").value);
+        const endMin = parseTimeInput(document.getElementById("edit-end").value);
+        const type = document.getElementById("edit-type").value.trim() || "Clase";
+        const room = document.getElementById("edit-room").value.trim();
+        const instructor = document.getElementById("edit-instructor").value.trim();
+
+        if (!title) {
+          errBox.textContent = "El nombre del ramo no puede estar vacío.";
+          errBox.hidden = false;
+          return;
+        }
+        if (startMin === null || endMin === null || endMin <= startMin) {
+          errBox.textContent = "La hora de término debe ser mayor a la hora de inicio.";
+          errBox.hidden = false;
+          return;
+        }
+
+        pendingUpdate = { title, day, startMin, endMin, type, room, instructor };
+        editActions.hidden = true;
+        saveConfirm.hidden = false;
+      });
+
+      document.getElementById("btn-confirm-save-no").addEventListener("click", () => {
+        saveConfirm.hidden = true;
+        editActions.hidden = false;
+        pendingUpdate = null;
+      });
+
+      document.getElementById("btn-confirm-save-yes").addEventListener("click", () => {
+        if (pendingUpdate) {
+          updateBlockInSchedule(blk, pendingUpdate);
+        }
+      });
+    };
+
+    renderViewMode();
     el.modalCourse.hidden = false;
   }
 
