@@ -356,6 +356,7 @@
         const card = document.createElement("div");
         const isNow = state.prefs.highlightNow && d === todayIdx && nowMin >= blk.startMin && nowMin <= blk.endMin;
         card.className = "class-block" + (isNow ? " is-now" : "");
+        card.dataset.courseId = blk.courseId;
         card.style.background = blk.color;
         card.style.top = `${top}px`;
         card.style.height = `${height}px`;
@@ -405,8 +406,12 @@
       colorInput.addEventListener("input", (e) => {
         course.color = e.target.value;
         colorDot.style.background = course.color;
+        el.grid.querySelectorAll(".class-block").forEach((blockEl) => {
+          if (blockEl.dataset.courseId === course.id) {
+            blockEl.style.background = course.color;
+          }
+        });
         saveSchedule();
-        render();
       });
 
       el.coursesList.appendChild(item);
