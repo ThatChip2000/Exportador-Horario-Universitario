@@ -621,11 +621,11 @@ const BannerParser = (() => {
   /**
    * 3. Generate 1-Click Bookmarklet pointing to the current app URL.
    * When run on "Semana de un Vistazo", it automatically fetches all linked "Horario de Detalle" pages
-   * using the user's active Banner session (no server, no passwords).
+   * on the current origin (fixing Santo Tomás's selferviceprd link typo) using the active session.
    */
   function buildBookmarklet(targetUrl) {
     const cleanUrl = targetUrl.split("#")[0];
-    const script = `(async function(){var links=[...new Set([...document.querySelectorAll('a[href*="P_CrseSchdDetl"]')].map(function(a){return a.href;}))];var h='';if(links.length){try{var pages=await Promise.all(links.map(function(u){return fetch(u,{credentials:'include'}).then(function(r){return r.text();});}));pages.forEach(function(txt){var d=new DOMParser().parseFromString(txt,'text/html');d.querySelectorAll('table.datadisplaytable').forEach(function(t){h+=t.outerHTML;});});}catch(e){}}if(!h){var t=document.querySelectorAll('table.datadisplaytable');if(!t.length){alert('Abre "Semana de un Vistazo" o "Horario de Detalle de Alumno" en Banner.');return;}t.forEach(function(e){h+=e.outerHTML;});}var p=btoa(unescape(encodeURIComponent(h)));window.open(${JSON.stringify(cleanUrl)}+'#html='+p,'_blank');})();`;
+    const script = `(async function(){var links=[...new Set([...document.querySelectorAll('a[href*="P_CrseSchdDetl"]')].map(function(a){var u=new URL(a.href,location.href);return location.origin+u.pathname+u.search;}))];var h='';if(links.length){try{var pages=await Promise.all(links.map(function(u){return fetch(u,{credentials:'include'}).then(function(r){return r.text();});}));pages.forEach(function(txt){var d=new DOMParser().parseFromString(txt,'text/html');d.querySelectorAll('table.datadisplaytable').forEach(function(t){var c=t.cloneNode(true);c.querySelectorAll('img,a').forEach(function(x){x.remove();});h+=c.outerHTML.replace(/\\s+(style|class|summary|scope|colspan|align|valign|width|border|cellspacing|cellpadding)="[^"]*"/gi,'');});});}catch(e){}}if(!h){var t=document.querySelectorAll('table.datadisplaytable');if(!t.length){alert('Abre "Semana de un Vistazo" o "Horario de Detalle de Alumno" en Banner.');return;}t.forEach(function(e){h+=e.outerHTML;});}var p=btoa(unescape(encodeURIComponent(h)));window.open(${JSON.stringify(cleanUrl)}+'#html='+p,'_blank');})();`;
     return "javascript:" + script;
   }
 
